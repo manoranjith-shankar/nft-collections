@@ -8,7 +8,7 @@ const ETHERSCAN_API_KEY = process.env.ETHERSCAN_API_KEY;
 module.exports = {
   solidity: "0.8.18",
   networks: {
-    buildBear: {
+    sepolia: {
       url: RPC_URL,
       accounts: [PRIVATE_KEY],
     },
