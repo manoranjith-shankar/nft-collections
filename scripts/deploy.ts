@@ -1,26 +1,38 @@
-import { formatEther, parseEther } from "viem";
-import hre from "hardhat";
+const hre = require("hardhat");
 
-async function main() {
-  const currentTimestampInSeconds = Math.round(Date.now() / 1000);
-  const unlockTime = BigInt(currentTimestampInSeconds + 60);
-
-  const lockedAmount = parseEther("0.001");
-
-  const lock = await hre.viem.deployContract("Lock", [unlockTime], {
-    value: lockedAmount,
-  });
-
-  console.log(
-    `Lock with ${formatEther(
-      lockedAmount
-    )}ETH and unlock timestamp ${unlockTime} deployed to ${lock.address}`
-  );
+async function sleep(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-// We recommend this pattern to be able to use async/await everywhere
-// and properly handle errors.
-main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
-});
+async function main() {
+  /*
+    DeployContract in ethers.js is an abstraction used to deploy new smart contracts,
+    so whitelistContract here is a factory for instances of our Whitelist contract.
+    */
+  // here we deploy the contract
+  const whitelistContract = await hre.ethers.deployContract("Whitelist", [10]);
+  // 10 is the Maximum number of whitelisted addresses allowed
+
+  // wait for the contract to deploy
+  await whitelistContract.waitForDeployment();
+
+  // print the address of the deployed contract
+  console.log("Whitelist Contract Address:", whitelistContract.target);
+
+  // Sleep for 30 seconds while Etherscan indexes the new contract deployment
+  await sleep(30 * 1000); // 30s = 30 * 1000 milliseconds
+
+  // Verify the contract on etherscan
+  await hre.run("verify:verify", {
+    address: whitelistContract.target,
+    constructorArguments: [10],
+  });
+}
+
+// Call the main function and catch if there is any error
+main()
+    .then(() => process.exit(0))
+    .catch((error) => {
+        console.error(error);
+        process.exit(1);
+    });
